@@ -1,0 +1,55 @@
+from manim import *
+
+class WaveEquationAnimation(ThreeDScene):
+    def construct(self):
+        # Define parameters for the wave equation
+        y_m = 1  # Amplitude
+        k = 1  # Wave number
+        w = 1  # Angular frequency
+
+        # Create a function to represent the wave equation
+        def wave_function(x, t):
+            return y_m * np.sin(k * x - w * t)
+
+        # Create a function to generate the 3D surface
+        def surface_function(u, v):
+            x = u
+            t = v
+            y = wave_function(x, t)
+            return np.array([x, y, 0])
+
+        # Create the axes and surface
+        axes = ThreeDAxes(x_range=[-10, 10], y_range=[-2, 2], z_range=[-1, 1])
+        surface = Surface(
+            lambda u, v: axes.c2p(*surface_function(u, v)),
+            u_range=[-10, 10],
+            v_range=[0, 2 * np.pi],
+            resolution=100,
+        )
+
+        # Create a line to represent the 1D wave
+        wave_line = Line(start=[-10, wave_function(-10, 0), 0], end=[10, wave_function(10, 0), 0])
+
+        # Set the camera orientation
+        self.set_camera_orientation(theta=70 * DEGREES, phi=75 * DEGREES)
+
+        # Add the axes, surface, and line to the scene
+        self.add(axes, surface, wave_line)
+
+        # Animate the surface and line
+        def update_wave(mob, dt):
+            # Update the surface and line
+            surface.generate_points()
+            for p in surface.points:
+                p[1] = wave_function(p[0], mob.time)
+            wave_line.points[0][1] = wave_function(-10, mob.time)
+            wave_line.points[1][1] = wave_function(10, mob.time)
+
+        # Create an animation to update the wave
+        wave_animation = Animation(surface, update_function=update_wave, duration=10)
+
+        # Highlight the wave_line with a yellow stroke
+        wave_line.stroke_color = YELLOW
+
+        # Play the animation
+        self.play(wave_animation)
